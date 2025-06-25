@@ -131,6 +131,40 @@ export default function LoginPage() {
                 </a>
               </p>
             </div>
+            <div className="mt-8 p-4 bg-gray-50 rounded-xl border border-gray-200">
+              <h3 className="font-semibold text-gray-700 mb-2">Info Login:</h3>
+              
+              <div className="space-y-4">
+                <div>
+                  <h4 className="font-medium text-gray-700">Admin:</h4>
+                  <p className="text-sm text-gray-600">Email: admin@gmail.com</p>
+                  <p className="text-sm text-gray-600">Password: admin123</p>
+                </div>
+
+                <div>
+                  <h4 className="font-medium text-gray-700">Pengurus:</h4>
+                  <div className="space-y-2">
+                    <div>
+                      <p className="text-sm text-gray-600">Email: coding@gmail.com</p>
+                      <p className="text-sm text-gray-600">Password: koding123</p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-600">Email: jepang@gmail.com</p>
+                      <p className="text-sm text-gray-600">Password: jepang123</p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-600">Email: ccmu@gmail.com</p>
+                      <p className="text-sm text-gray-600">Password: komputer123</p>
+                    </div>
+                  </div>
+                </div>
+
+                <div>
+                  <h4 className="font-medium text-gray-700">Mahasiswa:</h4>
+                  <p className="text-sm text-gray-600 italic">Silakan daftar terlebih dahulu</p>
+                </div>
+              </div>
+            </div>
           </form>
         </div>
       </div>
