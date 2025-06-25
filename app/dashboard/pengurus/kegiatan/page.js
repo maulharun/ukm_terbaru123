@@ -7,7 +7,6 @@ import {
     FileText, Trash2, Edit, X,
     Download, Upload
 } from 'lucide-react';
-import Image from 'next/image';
 import Navbar from '@/app/components/Dashboard/Navbar';
 import Sidebar from '@/app/components/Dashboard/Sidebar';
 import Footer from '@/app/components/Dashboard/Footer';
