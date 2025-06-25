@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { FileText } from 'lucide-react';
 import { Loader, Image as ImageIcon } from 'lucide-react';
@@ -132,64 +132,70 @@ export default function DaftarUKM() {
     }
   };
 
-  const fetchAndFilterUKMs = async () => {
+  const fetchAndFilterUKMs = useCallback(async () => {
     try {
-      setIsLoadingUKM(true);
+        setIsLoadingUKM(true);
+        setError(null);
 
-      const userStoredData = JSON.parse(localStorage.getItem('users'));
-      if (!userStoredData?.id) {
-        router.push('/login');
-        return;
-      }
+        const userStoredData = (() => {
+            try {
+                return JSON.parse(localStorage.getItem('users') || '{}');
+            } catch {
+                return {};
+            }
+        })();
 
-      // Fetch user data
-      const userRes = await fetch(`/api/users/${userStoredData.id}`);
-      const userData = await userRes.json();
+        if (!userStoredData?.id) {
+            router.push('/login');
+            return;
+        }
 
-      // Update user data state
-      setUserData({
-        _id: userData._id,
-        name: userData.name || '',
-        email: userData.email || '',
-        nim: userData.nim || '',
-        fakultas: userData.fakultas || '',
-        prodi: userData.prodi || '',
-        ukm: userData.ukm || [],
-        photoUrl: userData.photoUrl || ''
-      });
+        const [userRes, ukmRes] = await Promise.all([
+            fetch(`/api/users/${userStoredData.id}`),
+            fetch('/api/ukm')
+        ]);
 
-      // Get user's UKM list
-      const userUkmList = (userData?.ukm || []).map(ukm =>
-        ukm.name.toLowerCase()
-      );
-      setUserUKM(userUkmList);
+        if (!userRes.ok) throw new Error('Failed to fetch user data');
+        if (!ukmRes.ok) throw new Error('Failed to fetch UKM data');
 
-      // Fetch all UKMs
-      const ukmRes = await fetch('/api/ukm');
-      const ukmData = await ukmRes.json();
+        const userData = await userRes.json();
+        const ukmData = await ukmRes.json();
 
-      if (ukmData.success && Array.isArray(ukmData.ukm)) {
-        // Filter available UKMs
-        const available = ukmData.ukm.filter(ukm =>
-          !userUkmList.includes(ukm.name.toLowerCase())
+        setUserData({
+            _id: userData._id,
+            name: userData.name || '',
+            email: userData.email || '',
+            nim: userData.nim || '',
+            fakultas: userData.fakultas || '',
+            prodi: userData.prodi || '',
+            ukm: userData.ukm || [],
+            photoUrl: userData.photoUrl || ''
+        });
+
+        const userUkmList = (userData?.ukm || []).map(ukm => 
+            ukm.name.toLowerCase().trim()
         );
-        setUkmList(ukmData.ukm);
-        setAvailableUKMs(available);
-      }
+        setUserUKM(userUkmList);
+
+        if (ukmData.success && Array.isArray(ukmData.ukm)) {
+            const available = ukmData.ukm.filter(ukm =>
+                !userUkmList.includes(ukm.name.toLowerCase().trim())
+            );
+            setUkmList(ukmData.ukm);
+            setAvailableUKMs(available);
+        }
 
     } catch (error) {
-      console.error('Error:', error);
-      setError('Gagal memuat data UKM');
+        console.error('Error:', error);
+        setError(error instanceof Error ? error.message : 'Gagal memuat data UKM');
     } finally {
-      setIsLoadingUKM(false);
+        setIsLoadingUKM(false);
     }
-  };
+}, [router]);
 
-  // Update useEffect to use fetchAndFilterUKMs
-  useEffect(() => {
+useEffect(() => {
     fetchAndFilterUKMs();
-  }, [fetchAndFilterUKMs]);
-
+}, [fetchAndFilterUKMs]);
   // Update file validation
   const handleFileChange = (e, type) => {
     const file = e.target.files[0];
