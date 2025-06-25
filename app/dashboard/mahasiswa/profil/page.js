@@ -160,55 +160,51 @@ export default function MahasiswaProfile() {
 
     try {
       const userData = JSON.parse(localStorage.getItem('users'));
-      const formDataToSend = new FormData();
-      formDataToSend.append('name', formData.name);
-      formDataToSend.append('email', formData.email);
-      formDataToSend.append('nim', formData.nim);
-      formDataToSend.append('fakultas', formData.fakultas);
-      formDataToSend.append('prodi', formData.prodi);
-      Object.keys(formData).forEach(key => {
-        if (key !== 'photoUrl' && key !== 'ukm') {
-          formDataToSend.append(key, formData[key]);
-        }
-      });
-      // Add photo if changed
-      if (imageFile) {
-        formDataToSend.append('file', imageFile);
-      }
 
-      // Send to API route
-      const res = await fetch(`/api/users/profil/${userData.id}`, {
-        method: 'PUT',
-        body: formDataToSend,
-      });
-
-      if (!res.ok) {
-        const errorData = await res.json();
-        throw new Error(errorData.message || 'Gagal memperbarui profil');
-      }
-
-      const data = await res.json();
-      localStorage.setItem('users', JSON.stringify({
-        ...userData,
+      // Create payload object instead of FormData
+      const payload = {
         name: formData.name,
         email: formData.email,
         nim: formData.nim,
         fakultas: formData.fakultas,
         prodi: formData.prodi,
-        photoUrl: data.photoUrl || userData.photoUrl
+        photoUrl: formData.photoUrl
+      };
+
+      // Send JSON payload
+      const res = await fetch(`/api/users/profil/${userData.id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(payload)
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.message || 'Gagal memperbarui profil');
+      }
+
+      // Update localStorage
+      localStorage.setItem('users', JSON.stringify({
+        ...userData,
+        ...payload
       }));
 
       setSuccessMessage('Profil berhasil diperbarui');
-      setTimeout(() => setSuccessMessage(''), 3000);
+
+      // Refresh data
+      await fetchProfile();
 
     } catch (error) {
       setError(error.message);
-      setTimeout(() => setError(''), 3000);
     } finally {
       setIsLoading(false);
+      setTimeout(() => setSuccessMessage(''), 3000);
     }
   };
-
+  
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
