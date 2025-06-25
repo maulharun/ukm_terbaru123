@@ -73,6 +73,7 @@ export async function GET(request, context) {
   }
 }
 
+
 export async function PUT(request, context) {
   try {
     const params = await context.params;
@@ -84,7 +85,9 @@ export async function PUT(request, context) {
     }
 
     const { id } = params;
-    const formData = await request.formData();
+    // Parse JSON body instead of formData
+    const data = await request.json();
+    
     const client = await clientPromise;
     const db = client.db("ukm_baru");
 
@@ -99,39 +102,17 @@ export async function PUT(request, context) {
       );
     }
 
-    // Extract form data
-    const name = formData.get('name');
-    const email = formData.get('email');
-    const nim = formData.get('nim');
-    const fakultas = formData.get('fakultas');
-    const prodi = formData.get('prodi');
-    const file = formData.get('file');
-
-    // Create update object with new structure
+    // Create update object
     const updateData = {
-      name: name || existingUser.name,
-      email: email || existingUser.email,
+      name: data.name || existingUser.name,
+      email: data.email || existingUser.email,
+      nim: data.nim || existingUser.nim,
+      fakultas: data.fakultas || existingUser.fakultas,
+      prodi: data.prodi || existingUser.prodi,
       role: existingUser.role || 'mahasiswa',
-      ukm: existingUser.ukm?.map(ukm => ({
-        ...ukm,
-        nim: nim || ukm.nim,
-        fakultas: fakultas || ukm.fakultas,
-        prodi: prodi || ukm.prodi,
-      })) || [],
+      photoUrl: data.photoUrl || existingUser.photoUrl,
       updatedAt: new Date()
     };
-
-    // Handle photo upload if exists
-    if (file) {
-      if (existingUser.photoUrl) {
-        await cloudinary.uploader.destroy(existingUser.public_id);
-      }
-      const result = await uploadToCloudinary(file, 'profiles');
-      if (result.success) {
-        updateData.photoUrl = result.url;
-        updateData.public_id = result.public_id;
-      }
-    }
 
     // Update database
     const result = await db.collection('users').updateOne(
@@ -149,8 +130,7 @@ export async function PUT(request, context) {
     return NextResponse.json({
       success: true,
       message: 'Profil berhasil diubah',
-      photoUrl: updateData.photoUrl || null,
-      public_id: updateData.public_id || null
+      user: { ...updateData, _id: id }
     });
 
   } catch (error) {
